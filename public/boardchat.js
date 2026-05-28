@@ -199,8 +199,11 @@ canvas.addEventListener('click', (e) => {
   }
 
   if (selectedPaletteIndex !== null) {
-    pieces = pieces.filter(p => !(p.row === row && p.col === col));
     const template = PALETTE_PIECES[selectedPaletteIndex];
+    const existingPiece = pieces.find(p => p.row === row && p.col === col);
+    if (existingPiece) {
+      return;
+    }
     pieces.push({ label: template.label, owner: template.owner, row, col });
     drawBoard();
     return;
@@ -214,11 +217,17 @@ canvas.addEventListener('click', (e) => {
     if (clickedIdx === selectedPieceIndex) {
       selectedPieceIndex = null;
     } else if (clickedIdx !== -1) {
+      const movingPiece = pieces[selectedPieceIndex];
+      const targetPiece = pieces[clickedIdx];
+      if (movingPiece.owner === targetPiece.owner) {
+        selectedPieceIndex = null; 
+      } else {
       pieces.splice(clickedIdx, 1);
       const newIdx = selectedPieceIndex > clickedIdx ? selectedPieceIndex - 1 : selectedPieceIndex;
       pieces[newIdx].row = row;
       pieces[newIdx].col = col;
       selectedPieceIndex = null;
+      }
     } else {
       pieces[selectedPieceIndex].row = row;
       pieces[selectedPieceIndex].col = col;
