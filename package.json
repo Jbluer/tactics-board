@@ -1,7 +1,7 @@
 {
-  "name": "nn-chat",
+  "name": "boardchat",
   "version": "1.0.0",
-  "description": "NNチャット",
+  "description": "陣略棋戦術交流掲示板",
   "main": "index.js",
   "scripts": {
     "test": "node --test"
