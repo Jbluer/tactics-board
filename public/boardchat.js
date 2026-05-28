@@ -288,7 +288,7 @@ document.getElementById('btn-attach-board').addEventListener('click', () => {
   const textarea = formElement.elements['content'];
   const boardData = JSON.stringify(pieces);
   // すでに盤面データが含まれていたら置き換え、なければ追記
-  const cleaned = textarea.value.replace(/\[board:[^\]]*\]/g, '').trimEnd();
+  const cleaned = textarea.value.replace(/\[board:\[.*?\]\]/g, '').trimEnd();
   textarea.value = cleaned + (cleaned ? '\n' : '') + `[board:${boardData}]`;
 });
 

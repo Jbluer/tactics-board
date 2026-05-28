@@ -37,9 +37,9 @@ html(lang="ja")
                       i.bi-patch-check-fill.ms-1
                   - const tooltipTitle = `<small>${post.absoluteCreatedAt}</small>`
                   small.card-text.float-end(data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true" title=tooltipTitle) #{post.relativeCreatedAt}
-                - const boardMatch = post.content.match(/\[board:(\[.*?\])\]/s)
+                - const boardMatch = post.content.match(/\[board:(\[.*?\])\]/)
                 - const boardPieces = boardMatch ? boardMatch[1] : null
-                - const displayContent = post.content.replace(/\[board:[^\]]*\]/g, '').trim()
+                - const displayContent = post.content.replace(/\[board:\[.*?\]\]/, '').trim()
                 p.card-text.lead #{displayContent}
                 if boardPieces
                   div.mt-2
