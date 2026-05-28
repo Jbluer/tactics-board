@@ -31,6 +31,7 @@ function isPressedSubmitKey(event) {
   }
 }
 
+
 // ツールチップの有効化
 const tooltipTriggerElements = document.querySelectorAll('[data-bs-toggle="tooltip"]');
 tooltipTriggerElements.forEach((tooltipTriggerElement) => {
@@ -282,11 +283,122 @@ document.getElementById('btn-clear').addEventListener('click', () => {
   drawBoard();
 });
 
+// 盤面を添付するボタン
+document.getElementById('btn-attach-board').addEventListener('click', () => {
+  const textarea = formElement.elements['content'];
+  const boardData = JSON.stringify(pieces);
+  // すでに盤面データが含まれていたら置き換え、なければ追記
+  const cleaned = textarea.value.replace(/\[board:[^\]]*\]/g, '').trimEnd();
+  textarea.value = cleaned + (cleaned ? '\n' : '') + `[board:${boardData}]`;
+});
+
+// 投稿カード内の小さい盤面を描画する
+function renderBoardPreview(canvas, piecesData) {
+  const ctx = canvas.getContext('2d');
+  const cell = Math.floor(canvas.width / (COLS + 1));
+  const margin = cell;
+  const dark = isDarkMode();
+
+  const boardBg = dark ? '#6b4f27' : '#e8c97a';
+  const lineColor = dark ? '#3a2408' : '#5a3e1b';
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = boardBg;
+  ctx.fillRect(margin - cell * 0.15, margin - cell * 0.15,
+    COLS * cell + cell * 0.3, ROWS * cell + cell * 0.3);
+
+  ctx.strokeStyle = lineColor;
+  ctx.lineWidth = 0.5;
+  for (let c = 0; c <= COLS; c++) {
+    ctx.beginPath();
+    ctx.moveTo(margin + c * cell, margin);
+    ctx.lineTo(margin + c * cell, margin + ROWS * cell);
+    ctx.stroke();
+  }
+  for (let r = 0; r <= ROWS; r++) {
+    ctx.beginPath();
+    ctx.moveTo(margin, margin + r * cell);
+    ctx.lineTo(margin + COLS * cell, margin + r * cell);
+    ctx.stroke();
+  }
+
+  piecesData.forEach((p) => {
+    const x = margin + p.col * cell + cell / 2;
+    const y = margin + p.row * cell + cell / 2;
+    const r = cell * 0.42;
+    const isBlack = p.owner === 'black';
+
+    ctx.save();
+    if (p.owner === 'white') {
+      ctx.translate(x, y);
+      ctx.rotate(Math.PI);
+      ctx.translate(-x, -y);
+    }
+    ctx.beginPath();
+    const pts = pentagonPoints(x, y, r);
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.closePath();
+    ctx.fillStyle = isBlack ? '#1c1c1c' : '#f5f0e0';
+    ctx.strokeStyle = isBlack ? '#555' : '#aaa';
+    ctx.lineWidth = 0.5;
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    const fontSize = Math.max(5, Math.floor(cell * 0.38));
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = isBlack ? '#f5f0e0' : '#1c1c1c';
+    if (p.owner === 'white') {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(Math.PI);
+      ctx.fillText(p.label, 0, 0);
+      ctx.restore();
+    } else {
+      ctx.fillText(p.label, x, y);
+    }
+  });
+}
+
+// 投稿一覧コンテナにイベント委譲で「盤面に反映」ボタンを処理
+document.getElementById('posts-container').addEventListener('click', (e) => {
+  const btn = e.target.closest('.btn-load-board');
+  if (!btn) return;
+  const raw = btn.dataset.pieces;
+  if (!raw) return;
+  try {
+    pieces = JSON.parse(raw);
+    selectedPieceIndex = null;
+    selectedPaletteIndex = null;
+    renderPalette();
+    drawBoard();
+  } catch(e) { /* 不正データは無視 */ }
+});
+
 const resizeObserver = new ResizeObserver(() => resizeCanvas());
 const boardArea = document.querySelector('.board-area');
 if (boardArea) resizeObserver.observe(boardArea);
 
 window.addEventListener('load', () => {
+  const container = document.getElementById('posts-container');
+  if (container) container.scrollTop = container.scrollHeight;
   renderPalette();
   resizeCanvas();
+  // 投稿カード内の盤面プレビューを全て描画
+  initBoardPreviews();
 });
+
+function initBoardPreviews() {
+  document.querySelectorAll('.board-preview-canvas').forEach((canvas) => {
+    const raw = canvas.dataset.pieces;
+    if (!raw) return;
+    try {
+      const piecesData = JSON.parse(raw);
+      const size = canvas.width; // 既にwidthは設定済み
+      renderBoardPreview(canvas, piecesData);
+    } catch(e) { /* 不正データは無視 */ }
+  });
+}

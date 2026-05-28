@@ -37,7 +37,20 @@ html(lang="ja")
                       i.bi-patch-check-fill.ms-1
                   - const tooltipTitle = `<small>${post.absoluteCreatedAt}</small>`
                   small.card-text.float-end(data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true" title=tooltipTitle) #{post.relativeCreatedAt}
-                p.card-text.lead #{post.content}
+                - const boardMatch = post.content.match(/\[board:(\[.*?\])\]/s)
+                - const boardPieces = boardMatch ? boardMatch[1] : null
+                - const displayContent = post.content.replace(/\[board:[^\]]*\]/g, '').trim()
+                p.card-text.lead #{displayContent}
+                if boardPieces
+                  div.mt-2
+                    canvas.board-preview-canvas(
+                      width="180" height="180"
+                      data-pieces=boardPieces
+                      style="border-radius:4px; box-shadow:0 1px 4px rgba(0,0,0,0.2); display:block;")
+                    button.btn.btn-outline-secondary.btn-sm.mt-1.btn-load-board(
+                      type="button"
+                      data-pieces=boardPieces) 盤面に反映
+                      i.bi-arrow-left-circle.ms-1
               - const isDeletable = (user === post.postedBy || user === 'admin')
               if isDeletable
                 div.card-footer.d-flex.justify-content-end
@@ -52,6 +65,9 @@ html(lang="ja")
               textarea(name="content" rows="3" placeholder="Ctrl(Command)+Enterで送信できます").form-control
               input(type="hidden" name="oneTimeToken" value=oneTimeToken)
             div.col-12
+              button(type="button").btn.btn-outline-secondary.btn-sm#btn-attach-board
+                i.bi-grid-3x3.me-1
+              | 盤面を添付
               button(type="submit").btn.btn-primary.float-end
                 i.bi-send
 
